@@ -20,9 +20,9 @@ message is sent and no goal is created in any of those cases.
 
 ## Universal Adapter Contract
 
-**Workflow planning Anda bebas. Universal Adapter tidak memaksa bagaimana Anda melakukan
-planning. Namun plan yang ingin diteruskan ke pi-goal harus mengikuti Universal Adapter
-Contract. Contract ini adalah bahasa bersama antara workflow dan adapter.**
+**Your planning workflow is free. The Universal Adapter does not force how you plan.
+However, any plan handed to pi-goal must follow the Universal Adapter Contract.
+This contract is the shared language between workflow and adapter.**
 
 In one line: *the workflow may differ, the contract is stable, the adapter does not guess.*
 

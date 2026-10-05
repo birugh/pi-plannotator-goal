@@ -93,7 +93,7 @@ It is NOT:
 ```text
 Plannotator
     ↓
-custom validate.mjs wajib
+custom validate.mjs required
     ↓
 Universal Adapter
 ```
@@ -105,4 +105,4 @@ interpretation, a versioned and documented contract, fail-closed safety, and a c
 integration into pi-goal through public APIs only. `npm run typecheck` exits 0 and
 `node --test` reports all tests green.
 
-> Workflow boleh berbeda. Contract harus stabil. Adapter tidak menebak.
+> Workflows may differ. The contract stays stable. The adapter does not guess.

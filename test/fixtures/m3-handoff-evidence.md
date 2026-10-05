@@ -1,20 +1,20 @@
 # M3.2 runtime handoff evidence
 
-Sesi: satu TUI nyata di `tmux` session `m3probe`:
+Session: one real TUI session in `tmux` session `m3probe`:
 `pi --plan --extension /home/biru/.pi/agent/plans/probes/m3-handoff-probe.ts`
-(`mode=tui`, `hasUI=true` — dibuktikan baris `session-start` di `m3-handoff-evidence.jsonl`).
+(`mode=tui`, `hasUI=true` — proven by the `session-start` line in `m3-handoff-evidence.jsonl`).
 
-Log sesi: `sessions/--home-biru-.pi-agent--/2026-10-04T13-49-56-121Z_01a1072d-ac18-7636-a308-4c1780f00387.jsonl`
-(baris `L<n>` di bawah menunjuk file ini). Bukti mesin: `plans/probes/m3-handoff-evidence.jsonl`.
+Session log: `sessions/--home-biru-.pi-agent--/2026-10-04T13-49-56-121Z_01a1072d-ac18-7636-a308-4c1780f00387.jsonl`
+(line `L<n>` below refers to this file). Machine evidence: `plans/probes/m3-handoff-evidence.jsonl`.
 
-Goal probe yang terbentuk: `mutvvtbc-z24zn2`
+Probe goal created: `mutvvtbc-z24zn2`
 (`.pi/goals/active_goal_2026100420555172_mutvvtbc-z24zn2.md`).
 
 ---
 
 ## Test F — event handoff (`plan-approved` → deferred → `sendUserMessage`)
 
-Payload mentah `m3-handoff-evidence.jsonl`:
+Raw payload `m3-handoff-evidence.jsonl`:
 
 ```json
 {"kind":"plan-approved-sync","planFilePath":"plans/M-90-probe-gate-test.md","feedback":null,"sessionCtxCached":true,"isIdleAtSync":false}
@@ -24,45 +24,45 @@ Payload mentah `m3-handoff-evidence.jsonl`:
 
 FACT:
 
-1. Event tiba saat agent **busy**: `isIdleAtSync=false`. Selaras timing M2 (emit di dalam
+1. Event arrived while agent was **busy**: `isIdleAtSync=false`. Matches M2 timing (emit inside
    `execute()` submit; `terminate: true` `@plannotator/pi-extension/index.ts:1356`, `:1415`).
-2. `setImmediate` masih `isIdleAtDeferred=false` (gap sync→deferred 4 ms) → **defer satu macrotask
-   tidak cukup** untuk mendapatkan `isIdle()===true` di jalur ini.
-3. `deliverAs` dipilih dari nilai terukur, bukan asumsi → `"steer"`.
-4. Pesan benar-benar sampai: transcript `L19` (pesan masuk sebagai user turn) → `L20` assistant
-   menjawab `HANDOFF-RECEIVED`. Tidak ada tool dipanggil pada turn itu.
+2. `setImmediate` still `isIdleAtDeferred=false` (sync→deferred gap 4 ms) → **deferring one macrotask
+   is not enough** to get `isIdle()===true` on this path.
+3. `deliverAs` was chosen from measured value, not assumption → `"steer"`.
+4. Message actually arrived: transcript `L19` (message arrives as user turn) → `L20` assistant
+   answers `HANDOFF-RECEIVED`. No tool called on that turn.
 
-U-2, U-3, U-9 **tertutup**:
+U-2, U-3, U-9 **closed**:
 
-- U-2: handler event tidak memanggil UI apa pun; `setImmediate` cukup aman untuk
-  `sendUserMessage` (tidak ada deadlock, pesan terkirim, agent melanjutkan).
-- U-3: ctx yang di-cache dari `session_start` (`pi.events.on` hanya menerima `data`, lihat
-  `plans/probes/m2-probe.ts:115`) punya `isIdle()` yang berfungsi di waktu event.
-- U-9: `steer` adalah pilihan yang benar untuk kondisi terukur; `followUp` **belum** terbukti
-  diperlukan maupun berbahaya (tidak diuji = tetap UNKNOWN parsial, lihat bawah).
+- U-2: event handler does not call any UI; `setImmediate` is safe enough for
+  `sendUserMessage` (no deadlock, message sent, agent continues).
+- U-3: cached ctx from `session_start` (`pi.events.on` only receives `data`, see
+  `plans/probes/m2-probe.ts:115`) has an `isIdle()` that works at event time.
+- U-9: `steer` is the correct choice for the measured condition; `followUp` has **not** been proven
+  necessary or harmful (not tested → still partial UNKNOWN, see below).
 
-## Test A — `create_goal` → `set_goal_tasks` → konfirmasi manusia → tree persisted
+## Test A — `create_goal` → `set_goal_tasks` → human confirmation → tree persisted
 
-| Langkah | Bukti |
+| Step | Evidence |
 |---|---|
-| `create_goal` dipanggil | transcript `L24` (`toolCall create_goal`) |
-| goal dibuat + fokus | `L25` custom entry `{"focusedGoalId":"mutvvtbc-z24zn2","reason":"created"}` |
-| laporan create | `L26` `"Goal confirmed and created. Finalized goal: ..."` + baris `other open goal remain in .pi/goals — this goal is now the session focus.` |
-| `set_goal_tasks` dipanggil | `L29` |
-| konfirmasi manusia muncul | capture pane: dialog `Task list confirmation`, daftar `T-01`/`T-01.1`/`T-02`, footer `Confirm task list` \| `Keep current tasks`, `blockCompletion enabled` |
-| accept (Enter oleh user) | `L30` toolResult `"Task list set and confirmed. 3 tasks. (blockCompletion enabled)"` |
-| tree persisted | file goal: `taskList.tasks = ["T-01","T-02"]` (T-01 punya anak `T-01.1`), `blockCompletion: true` |
+| `create_goal` called | transcript `L24` (`toolCall create_goal`) |
+| goal created + focused | `L25` custom entry `{"focusedGoalId":"mutvvtbc-z24zn2","reason":"created"}` |
+| create report | `L26` `"Goal confirmed and created. Finalized goal: ..."` + line `other open goal remain in .pi/goals — this goal is now the session focus.` |
+| `set_goal_tasks` called | `L29` |
+| human confirmation dialog appears | capture pane: dialog `Task list confirmation`, list `T-01`/`T-01.1`/`T-02`, footer `Confirm task list` \| `Keep current tasks`, `blockCompletion enabled` |
+| accept (Enter by user) | `L30` toolResult `"Task list set and confirmed. 3 tasks. (blockCompletion enabled)"` |
+| tree persisted | goal file: `taskList.tasks = ["T-01","T-02"]` (T-01 has child `T-01.1`), `blockCompletion: true` |
 
-FACT: jalur dua tool bekerja end-to-end di sesi ber-UI, dan gate 2 benar-benar manusia
-(dialog native pi-goal, bukan auto-confirm; `PI_GOAL_AUTO_CONFIRM` tidak pernah diset —
-`env | grep PI_GOAL` kosong).
+FACT: the two-tool path works end-to-end in a real UI session, and gate 2 is genuinely human
+(native pi-goal dialog, not auto-confirm; `PI_GOAL_AUTO_CONFIRM` was never set —
+`env | grep PI_GOAL` empty).
 
-## Test B — `terminate: true` (U-1) — **tertutup**
+## Test B — `terminate: true` (U-1) — **closed**
 
-Urutan transcript:
+Transcript order:
 
 ```text
-L22 user      instruksi "SAME turn, two calls"
+L22 user      instruction "SAME turn, two calls"
 L24 assistant toolCall create_goal
 L25 custom    focusedGoalId ... reason created
 L26 toolResult "Goal confirmed and created..."
@@ -72,52 +72,52 @@ L29 assistant toolCall set_goal_tasks
 L30 toolResult "Task list set and confirmed. 3 tasks."
 ```
 
-FACT: ada `system` boundary + `pi_goal_continuation` checkpoint **di antara** kedua tool call.
-Artinya `terminate: true` (`goal-core-tools.ts:228`) mengakhiri batch: `set_goal_tasks` hanya
-berjalan setelah checkpoint continuation, **bukan** pada turn/step yang sama.
+FACT: there is a `system` boundary + `pi_goal_continuation` checkpoint **between** the two tool calls.
+So `terminate: true` (`goal-core-tools.ts:228`) ends the batch: `set_goal_tasks` only runs after the
+checkpoint continuation, **not** in the same turn/step.
 
-Konsekuensi untuk adapter (D-12): handoff dua langkah **tidak bisa** dikirim sebagai satu batch
-tool; agent wajib melanjutkan lewat continuation, dan dialog task terjadi di step lanjutan.
-Jendela "goal active tanpa task tree" (I-1) karenanya nyata dan terukur, bukan teoretis.
+Consequence for adapter (D-12): the two-step handoff **cannot** be sent as one batch of tools;
+the agent must continue via continuation, and the task dialog happens on the continuation step.
+The "goal active without task tree" window (I-1) is therefore real and measured, not theoretical.
 
-## Test C — depth (U-4) — **tertutup**
+## Test C — depth (U-4) — **closed**
 
-| Call | Hasil |
+| Call | Result |
 |---|---|
-| `L39` `T-01`, `T-01.1`, `T-01.1.1` | `L40` toolResult `Task "T-01" has subtask nesting depth 2, exceeding the configured maximum of 1` — tanpa dialog, tanpa mutasi |
-| `L41` `T-01`, `T-01.1` | dialog muncul (`L42` menunggu keputusan manusia) |
+| `L39` `T-01`, `T-01.1`, `T-01.1.1` | `L40` toolResult `Task "T-01" has subtask nesting depth 2, exceeding the configured maximum of 1` — no dialog, no mutation |
+| `L41` `T-01`, `T-01.1` | dialog appears (`L42` waits for human decision) |
 
-FACT: `subtaskDepth=1` menolak `T-01.1.1` di runtime; pesan error pi-goal persis seperti yang
-diprediksi dari source (`goal-task-tools.ts:135-137`). Tidak ada setting yang diubah.
+FACT: `subtaskDepth=1` rejects `T-01.1.1` at runtime; the pi-goal error message matches exactly what
+was predicted from source (`goal-task-tools.ts:135-137`). No setting was changed.
 
-## Test D — dialog reject — **tertutup**
+## Test D — dialog reject — **closed**
 
-`L41` `set_goal_tasks` (2 task) → dialog tampil → **Esc = `Keep current tasks`** oleh user.
+`L41` `set_goal_tasks` (2 tasks) → dialog shown → **Esc = `Keep current tasks`** by user.
 
 - `L42` toolResult: `"Task list kept unchanged."`
-- File goal setelah reject: `taskList.tasks = ["T-01","T-02"]`, `blockCompletion: true`,
+- Goal file after reject: `taskList.tasks = ["T-01","T-02"]`, `blockCompletion: true`,
   `revision: 20`, `status: paused`.
 
-FACT: reject = nol mutasi (bukan sebagian). Selaras `goal-task-tools.ts:336-340`.
+FACT: reject = zero mutation (not partial). Matches `goal-task-tools.ts:336-340`.
 
-Catatan penting (bukan bug, tapi fakta UX): agent **tidak melihat** dialog reject. Hasil
-tool datang sebagai `Task list kept unchanged.` tanpa penanda "dialog ditolak manusia", dan agent
-menyimpulkan "no dialog appeared". Adapter tidak boleh bergantung pada agent untuk membedakan
-"manusia menolak" vs "dialog tidak tersedia" — pesan yang sama bisa berarti kedua hal
-(bandingkan `goal-task-confirmation.ts:41` `ui.select` tidak ada → `cancel`).
+Important note (not a bug, but UX fact): the agent **does not see** the reject dialog. The tool
+result comes as `Task list kept unchanged.` without any marker that a human rejected the dialog,
+so the agent concludes "no dialog appeared". The adapter must not depend on the agent to distinguish
+"human rejected" vs "dialog unavailable" — the same message can mean either (compare
+`goal-task-confirmation.ts:41` `ui.select` missing → `cancel`).
 
-Timing: `L41` 14:02:07.551 → `L42` 14:03:33.448 = **86 detik** menunggu keputusan manusia;
-durasi keputusan tak terbatas (U-11 dari M2 tetap berlaku: adapter tidak boleh timeout).
+Timing: `L41` 14:02:07.551 → `L42` 14:03:33.448 = **86 seconds** waiting for human decision;
+decision duration is unbounded (U-11 from M2 still holds: adapter must not timeout).
 
-## Test E — existing goal terdeteksi (U-10) — **tertutup**
+## Test E — existing goal detected (U-10) — **closed**
 
-Tiga jalur publik, semuanya teramati:
+Three public paths, all observed:
 
-1. Banner `pi-goal-x` saat sesi mulai: `1 open goal is available. Run /goal-focus to choose the
-   goal for this session.` dengan status bar `goal: unfocused [1 open]`.
-2. Laporan `create_goal` (`L26`): `other open goal remain in .pi/goals — this goal is now the
-   session focus.`, dan status bar probe goal: `(+1 open)`.
-3. Operator `/goal-list` (dijalankan di sesi probe):
+1. `pi-goal-x` banner at session start: `1 open goal is available. Run /goal-focus to choose the
+   goal for this session.` with status bar `goal: unfocused [1 open]`.
+2. `create_goal` report (`L26`): `other open goal remain in .pi/goals — this goal is now the
+   session focus.`, and probe goal status bar: `(+1 open)`.
+3. Operator `/goal-list` (run in probe session):
 
 ```text
 Open goals: 2
@@ -126,41 +126,41 @@ Open goals: 2
   ...activePath
 ```
 
-FACT: kondisi "existing open goal yang bukan milik plan ini" dapat dideteksi tanpa API privat:
-banner/prompt fokus, laporan create, dan `/goal-list` semuanya permukaan yang sah. D-14
-(STOP + REPORT + user memilih) karenanya bisa ditegakkan dengan data di atas, termasuk
-`activePath` yang dibutuhkan untuk laporan.
+FACT: the condition "existing open goal that does not belong to this plan" can be detected without
+private API: focus banner/prompt, create report, and `/goal-list` are all public surfaces. D-14
+(STOP + REPORT + user chooses) can therefore be enforced using the above data, including the
+`activePath` needed for the report.
 
-INFERENCE (batas jalur): adapter **tidak** bisa membaca pool goal sendiri (tanpa `_goalCore`).
-Jadi langkah 1–2 D-14 dijalankan oleh **agent** atas instruksi adapter (pesan memuat perintah
-"laporkan goal terbuka lain sebelum create"), atau oleh adapter hanya sebagai instruksi
-teks — bukan pembacaan state oleh adapter. Ini adalah konsekuensi boundary, bukan kekurangan
-sementara.
+INFERENCE (path boundary): the adapter **cannot** read the goal pool itself (without `_goalCore`).
+So steps 1–2 of D-14 are executed by the **agent** on adapter instruction (the message contains the
+command "report any other open goal before create"), or by the adapter only as text instruction — not
+as adapter state reading. This is a boundary consequence, not a temporary limitation.
 
-## U-5 — merge saat struktur berubah: belum diuji
+## U-5 — merge when structure changes: not tested
 
-Tidak dijalankan (bukan bagian Test A–E; biaya token sesi tinggi). Status: **UNKNOWN** dibawa
-ke M3.3/M4; jalur source tetap `mergeTasksWithExisting` (`goal-task-tools.ts:148-185`,
-`tasks.ts` panggilan `:350-351`) dan D-10 tidak terpengaruh karena plan approve bersifat beku.
+Not run (outside Tests A–E; session token cost high). Status: **UNKNOWN** carried to
+M3.3/M4; source path still `mergeTasksWithExisting` (`goal-task-tools.ts:148-185`,
+`tasks.ts` call `:350-351`) and D-10 is unaffected because plan approval is frozen.
 
-## U-11 — `deliverAs: followUp` belum pernah diuji
+## U-11 — `deliverAs: followUp` has not been tested
 
-`steer` terbukti bekerja untuk kondisi terukur. `followUp` tidak diuji → tetap UNKNOWN.
-Aturan adapter sementara: `ctx.isIdle() ? "followUp" : "steer"` (pola `goal-drafting.ts:182`),
-dengan catatan bahwa di jalur `plan-approved` nilai terukur selalu `false` (Test F).
+`steer` works for the measured condition. `followUp` untested → still UNKNOWN.
+Temporary adapter rule: `ctx.isIdle() ? "followUp" : "steer"` (pattern from
+`goal-drafting.ts:182`), with the note that on the `plan-approved` path the measured value is always
+`false` (Test F).
 
 ---
 
-## Perintah reproduksi
+## Reproduction commands
 
 ```bash
 tmux new-session -d -s m3probe "pi --plan --extension /home/biru/.pi/agent/plans/probes/m3-handoff-probe.ts"
-# Test F: submit plans/M-90-probe-gate-test.md, approve di http://127.0.0.1:<port acak>/
+# Test F: submit plans/M-90-probe-gate-test.md, approve at http://127.0.0.1:<random port>/
 #   port: ss -ltnp | grep "pid=$(tmux list-panes -t m3probe -F '#{pane_pid}'),"
-#   (dua port: 73xx = pi-web-ui, 35xxx = review browser)
-# Test A/B/C/D: instruksi tool di pane yang sama; dialog dijawab user (Enter / Esc)
-# Test E: /goal-list di pane yang sama
+#   (two ports: 73xx = pi-web-ui, 35xxx = review browser)
+# Test A/B/C/D: tool instructions in the same pane; dialog answered by user (Enter / Esc)
+# Test E: /goal-list in the same pane
 ```
 
-Batas: mudah lapuk bila port/prompt berubah; angka yang dikutip (revision, task id, timestamp)
-diambil dari file/sesi saat M3.2 dan tidak di-hardcode di kode.
+Limitation: fragile if port/prompt changes; quoted numbers (revision, task id, timestamp) were taken
+from the M3.2 file/session and are not hardcoded in the source.

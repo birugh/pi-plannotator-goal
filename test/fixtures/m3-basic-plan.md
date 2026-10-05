@@ -1,10 +1,10 @@
 # M-03 Library borrowing (M3.4 e2e fixture)
 
-Goal: patron dapat meminjam buku dan stok berkurang dalam satu transaksi
+Goal: a patron can borrow a book and stock decreases in a single transaction
 
 ## Context
 
-Modul borrowing belum ada.
+The borrowing module does not exist yet.
 
 ## Scope
 
@@ -12,15 +12,15 @@ Modul borrowing belum ada.
 
 ## Out of Scope
 
-- UI, denda
+- UI, fines
 
 ## Risks / Constraints
 
-- tanpa race pada stok
+- without stock race conditions
 
 ## S-01 Borrow flow
 
-- Scope: service + endpoint, tanpa UI
+- Scope: service + endpoint, without UI
 - [ ] T-01 Add borrow endpoint
 - [ ] T-01.1 Validate stock
 - [ ] T-01.2 Write ledger entry
@@ -28,5 +28,5 @@ Modul borrowing belum ada.
 
 ## Completion Requirements
 
-- CR-01: POST /borrow mengurangi stok dan menulis ledger
-- CR-02: stok habis ditolak dengan 409
+- CR-01: POST /borrow reduces stock and writes ledger
+- CR-02: out of stock is rejected with 409
