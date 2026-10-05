@@ -1,6 +1,6 @@
 {
   "name": "pi-plannotator-goal",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "description": "Universal Goal Adapter: turns an approved Plannotator plan into a pi-goal handoff, for any workflow that follows the Universal Adapter Contract",
   "keywords": [
@@ -25,7 +25,9 @@
     "README.md"
   ],
   "pi": {
-    "extensions": ["./index.ts"]
+    "extensions": [
+      "./index.ts"
+    ]
   },
   "license": "MIT",
   "scripts": {
