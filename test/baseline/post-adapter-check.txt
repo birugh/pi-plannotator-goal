@@ -1,0 +1,2 @@
+adapter pure checks: 33 assertions over 4 tasks
+ALL ADAPTER CHECKS PASS
