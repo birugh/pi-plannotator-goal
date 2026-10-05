@@ -350,3 +350,48 @@ literal wording would have shipped the retired-goal bug and made CR-004 fail.
 
 Rejected: following the task wording literally, and porting the fix later. Either would have
 made the baseline reflect behavior the adapter had already stopped having.
+## F-19 The cutover supersedes the pending M-04 LSP milestone
+
+Claim: moving the adapter out of `~/.pi/agent` makes the unexecuted M-04 milestone
+unreachable, and that should be recorded rather than silently absorbed.
+
+Evidence: M-04's goal is "`lens_diagnostics` on `extensions/goal-adapter.ts` reports 0
+typescript findings", and its CR-001 requires creating `extensions/tsconfig.json` with
+`extends: "../tsconfig.json"`. All seven of its tasks were still pending. The cutover deletes
+`extensions/goal-adapter.ts` and the root `tsconfig.json` that the child config would have
+extended, so both the file under measurement and the chosen fix stop existing.
+
+Decision: do not execute M-04 and do not delete it. Its file stays in `plans/` with its tasks
+untouched, and this finding records why it no longer applies.
+
+Consequence: the intent behind M-04, which was that a TypeScript file in the agent dir should
+not fall back to an inferred LSP project, is now carried by two better-scoped things: the
+extension has its own strict `tsconfig.json` and a real test suite in this repository, and the
+only remaining `.ts` file in the agent dir is `extensions/herdr-agent-state.ts`, which imports
+`node:net` and `node:path` only and therefore does not need the host package `paths` mapping
+that M-04 existed to restore.
+
+Rejected: executing M-04 first, which would have added a config file whose only purpose was to
+serve a file the plan deletes next; and deleting the M-04 plan file, which would have hidden
+an unexecuted commitment instead of explaining it.
+
+## F-20 The root tsconfig was load-bearing only for the probes
+
+Claim: deleting the agent dir root `tsconfig.json` is safe once the probes move.
+
+Evidence: commit `78f7631` added that file with the comment "add noEmit tsconfig so pi host
+types resolve for probes". Its `include` was `extensions/**/*.ts` and `plans/probes/**/*.ts`,
+and its `paths` mapping existed so tsserver could resolve
+`@earendil-works/pi-coding-agent` from the global install. Both consumers went away: the
+adapter moved to a repository with its own tsconfig, and `plans/probes` was removed as part of
+the same cutover.
+
+Decision: delete it, as the plan's T-23 requires.
+
+Consequence: the agent dir no longer carries a TypeScript project for a directory whose
+remaining TypeScript file imports only Node built-ins. Pi loads extensions through jiti, so the
+file was never consulted at runtime anyway, only by the language server.
+
+Rejected: keeping it and narrowing `include` to `extensions/**`. That would have preserved a
+file whose stated reason for existing had already moved elsewhere, and M-04 is where its
+remaining intent belongs.
