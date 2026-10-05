@@ -140,6 +140,9 @@ export function parsePlanText(text: string): Result<ParsedPlan, RejectReason> {
 
   const tasks: ParsedTask[] = [];
   const seen = new Set<string>();
+  // True when a checkbox appeared in a non-task section: the plan has task-like content
+  // but no task section, so the empty task list is a contract violation, not a typo.
+  let sawCheckboxOutsideTask = false;
 
   // One pass: track the current top-level section. Only `## S-<nn>` sections carry tasks.
   let section: { kind: "task"; heading: string } | { kind: "prose"; heading: string } | null = null;
@@ -174,6 +177,7 @@ export function parsePlanText(text: string): Result<ParsedPlan, RejectReason> {
     if (section.kind === "prose") {
       // Checkboxes inside Notes, Documentation, code examples, or any non-task section
       // are prose by definition and never become tasks (contract).
+      if (box !== null) sawCheckboxOutsideTask = true;
       continue;
     }
 
@@ -204,6 +208,15 @@ export function parsePlanText(text: string): Result<ParsedPlan, RejectReason> {
     seen.add(id);
     if (!title) return fail(reject("empty-task-title", `Task '${id}' has no title.`));
     tasks.push({ id, title, depth: id.split(".").length - 1 });
+  }
+
+  if (tasks.length === 0 && sawCheckboxOutsideTask) {
+    return fail(
+      reject(
+        "no-task-sections",
+        "Task-shaped checkboxes appear only outside '## S-<nn>' sections; the adapter cannot form tasks from them.",
+      ),
+    );
   }
 
   const requirements: string[] = [];

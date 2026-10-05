@@ -38,6 +38,7 @@ export type RejectCode =
   | "empty-task-title"
   | "stranded-checkbox"
   | "malformed-task"
+  | "no-task-sections"
   | "task-too-deep"
   | "no-tasks"
   | "too-many-tasks"
