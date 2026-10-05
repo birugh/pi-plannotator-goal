@@ -395,3 +395,31 @@ file was never consulted at runtime anyway, only by the language server.
 Rejected: keeping it and narrowing `include` to `extensions/**`. That would have preserved a
 file whose stated reason for existing had already moved elsewhere, and M-04 is where its
 remaining intent belongs.
+
+## F-21 The validator is no longer an adapter dependency
+
+Claim: after the universal contract work, the external validator must not gate the handoff
+at all, superseding F-12.
+
+Evidence: F-12 recorded that the adapter ran the path from the `validatePath` config key,
+defaulting to `<agent dir>/plans/validate.mjs`, before every handoff. That made the handoff
+depend on a workflow-owned file: a workflow without that file (or with a different one)
+could not be handed off at all. The Universal Adapter Contract work removes that dependency
+by making the adapter's own contract validation the only required validation.
+
+Decision: delete the `validatePath` config key, the `runValidator` stage in `index.ts`, the
+`validator-failed` reject reason, and the default validator path. The adapter now validates
+the plan entirely through the contract parser (`docs/ADAPTER-CONTRACT.md`) and refuses
+non-conforming plans with a typed reason. A workflow MAY keep its own validator as an
+optional planning-time check; a `validatePath` key left in old settings files is tolerated
+as an unknown key and ignored. The six fixture workflows in `test/workflow-compat.test.ts`
+prove the adapter hands off with no validator, no custom planner, and no workflow-owned
+file.
+
+Consequence: the adapter is universal: any workflow whose plan satisfies the contract can
+hand off, and the contract is the single shared language. The divergence from F-12 is
+intentional and recorded so the two findings do not look contradictory.
+
+Rejected: keeping the validator as an optional-but-wired key. An optional external
+validator is a planning concern, not an adapter concern, and carrying the key would keep a
+`plans/validate.mjs` presence subtly load-bearing for old setups.

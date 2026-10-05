@@ -24,15 +24,16 @@ Each stage either advances or refuses. A refusal sends nothing and creates nothi
 5. Compare the file with `planContent` when the payload carries it. A mismatch means the
    approved bytes are not the bytes on disk, so the handoff is refused rather than
    translated from either one.
-6. Run the validator at `validatePath`. A non-zero exit refuses and quotes its output.
-7. Parse the plan text: the `Goal:` line, task checkboxes with their implied depth, the
-   requirement bullets, the optional `Execution order:` declaration, and the context
-   sections.
-8. Assemble the goal IR: apply the pi-goal limits, build the objective and the single-line
+6. Parse the plan text against the Universal Adapter Contract v1 (`docs/ADAPTER-CONTRACT.md`):
+   the `Goal:` line, task checkboxes inside `## S-<nn>` story sections with their implied
+   depth, the requirement bullets, the optional `Execution order:` declaration, and the
+   context sections. This is the only validation the handoff requires; no external
+   validator is run.
+7. Assemble the goal IR: apply the pi-goal limits, build the objective and the single-line
    verification contract, and compute the plan fingerprint.
-9. Resolve the goal pool and read the open goals. Any open goal refuses the handoff and
+8. Resolve the goal pool and read the open goals. Any open goal refuses the handoff and
    reports the pool.
-10. Log the handoff and send one instruction message.
+9. Log the handoff and send one instruction message.
 
 ## Refusal codes
 
@@ -44,12 +45,14 @@ session notification and written to the log.
 | `bad-payload` | config | the event payload did not match the schema, or had no cwd/planFilePath |
 | `plan-unreadable` | index | the plan file could not be read from disk |
 | `plan-changed` | index | the file differs from the approved payload |
-| `validator-failed` | index | the external validator exited non-zero |
+| `stranded-checkbox` | plan-text | a checkbox-shaped line appears before any top-level section; the adapter cannot classify it |
+| `no-task-sections` | plan-text | task-shaped checkboxes appear only outside `## S-<nn>` sections |
 | `missing-goal-line` | plan-text | no `Goal: <outcome>` line |
 | `milestone-or-story-id` | plan-text | an M- or S- id appeared in a task checkbox |
 | `invalid-task-id` | plan-text | the id is not `T-<nn>` or `T-<nn>.<m>` |
 | `duplicate-task-id` | plan-text | the same task id appears twice |
 | `empty-task-title` | plan-text | a task checkbox has no title |
+| `malformed-task` | plan-text | a checkbox in a task section does not match the strict task form |
 | `no-tasks` | ir | there is no task checkbox at all |
 | `task-too-deep` | ir | a sub-task is nested deeper than `MAX_DEPTH` |
 | `too-many-tasks` | ir | more tasks than `MAX_TASKS` |

@@ -37,16 +37,13 @@ Only an explicit `true` enables the adapter. Every other value keeps it silent:
 The string `"true"` is deliberately not coerced. The kill switch came from M3 finding D-16:
 a value that is not literally `true` must not start a handoff.
 
-### `validatePath`
+### `validatePath` (removed)
 
-Type string, default `<agent dir>/plans/validate.mjs`.
-
-The plan validator is executed as `node <validatePath> <planPath>` before the handoff. A
-non-zero exit refuses the handoff and quotes the validator output. A relative path is
-resolved against `cwd`; an absolute path is used as given.
-
-The validator itself is owned by the dotfiles repository and is reached only through this
-key, so this repository never carries a copy of it.
+The adapter no longer reads a `validatePath` key and never executes an external validator
+before a handoff. A key named `validatePath` in a settings file is tolerated as an unknown
+key and ignored: a workflow MAY keep its own validator as a planning-phase check, but it is
+never an adapter dependency and never required for a handoff. The only validation the
+adapter performs is the Universal Adapter Contract check (see `docs/ADAPTER-CONTRACT.md`).
 
 ### `logPath`
 
@@ -99,7 +96,7 @@ Project, opt in for one repository and keep its log local:
 
 `resolveConfig(cwd, env, homeDir)` returns:
 
-- `enabled`, `validatePath`, `logPath`: the resolved values
+- `enabled`, `logPath`: the resolved values
 - `sources`: the winning scope for each key, one of `project`, `global`, `default`
 - `notes`: human-readable descriptions of files that were ignored
 

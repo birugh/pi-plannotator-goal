@@ -59,10 +59,10 @@ the temp sink by default, so a probe cannot append to the real log. This matters
 probes wrote the real kill switch and the real probe log, so an interrupted run could leave
 the real adapter disabled.
 
-The factory takes optional `deps`, so a test can stub the external validator or a specific
-environment without module mocking. One case passes no stub and points `validatePath` at the
-real `plans/validate.mjs` in the dotfiles repository, which proves the config key is the
-wiring rather than a decoration.
+The factory takes optional `deps`, so a test can stub an environment without module
+mocking. No test stubs an external validator, because the adapter has no validator stage:
+`test/workflow-compat.test.ts` hands off fixtures with no `validate.mjs` anywhere,
+proving the config key is gone and the contract parser is the only validation.
 
 ## Evidence
 
