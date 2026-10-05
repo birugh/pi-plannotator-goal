@@ -41,7 +41,7 @@ agent dir file:
 
 - `enabled` (boolean, default false) - only an explicit `true` allows a handoff.
 - `validatePath` (string, default `<agent dir>/plans/validate.mjs`) - the plan validator.
-- `logPath` (string, default `<agent dir>/plans/probes/m3-adapter-log.jsonl`) - the JSONL sink.
+- `logPath` (string, default `<agent dir>/plans/plannotator-goal.jsonl`) - the JSONL sink.
 
 Project scope is `<cwd>/.pi/plannotator-goal.json`; global scope is
 `<agent dir>/plannotator-goal.json`. Full precedence, fallback behavior, and the environment

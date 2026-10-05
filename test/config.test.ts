@@ -101,7 +101,7 @@ describe("scope precedence", () => {
     const { cwd, agentDir } = makeDirs();
     const config = resolveConfig(cwd, { PI_CODING_AGENT_DIR: agentDir }, "/nonexistent-home");
     assert.equal(config.validatePath, join(agentDir, "plans", "validate.mjs"));
-    assert.equal(config.logPath, join(agentDir, "plans", "probes", "m3-adapter-log.jsonl"));
+    assert.equal(config.logPath, join(agentDir, "plans", "plannotator-goal.jsonl"));
     assert.equal(config.sources.validatePath, "default");
   });
 

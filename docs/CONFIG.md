@@ -50,13 +50,16 @@ key, so this repository never carries a copy of it.
 
 ### `logPath`
 
-Type string, default `<agent dir>/plans/probes/m3-adapter-log.jsonl`.
+Type string, default `<agent dir>/plans/plannotator-goal.jsonl`.
 
 The JSONL sink. One line per event, with a call-time `ts`. A relative path is resolved
 against `cwd`; an absolute path is used as given.
 
-That default deliberately points at the historical M3 probe log, so an unconfigured
-installation appends to the same file the recorded evidence came from.
+The historical M3 sink was `<agent dir>/plans/probes/m3-adapter-log.jsonl`. That directory
+belongs to the adapter's own probe suite and was removed in the same cutover that moved the
+adapter into its own repository, so the default no longer writes there: a default that
+recreated a deleted directory would be the deletion undoing itself on the first handoff. Set
+`logPath` explicitly to the historical path if the old file is still wanted.
 
 ## Precedence and fallback
 

@@ -38,8 +38,14 @@ export function defaultValidatePath(agentDir: string): string {
   return join(agentDir, "plans", "validate.mjs");
 }
 
+/**
+ * The historical M3 sink was <agent dir>/plans/probes/m3-adapter-log.jsonl. That directory
+ * was removed with the adapter's own probe directory, and the old default would recreate it
+ * on the first handoff, so the default is the same file one level up. An explicit logPath,
+ * including the historical one, is still honored.
+ */
 export function defaultLogPath(agentDir: string): string {
-  return join(agentDir, "plans", "probes", "m3-adapter-log.jsonl");
+  return join(agentDir, "plans", "plannotator-goal.jsonl");
 }
 
 export function projectConfigPath(cwd: string): string {
