@@ -11,7 +11,7 @@ never executes the plan itself, and it never asks an LLM to reinterpret the plan
 
 This adapter is designed for the combination **Plannotator + Goal Adapter + pi-goal**: you
 plan and get approval with Plannotator, the adapter translates the approved plan into a
-gpi-goal handoff, and pi-goal owns execution.
+pi-goal handoff, and pi-goal owns execution.
 
 The point of the adapter is the refusal paths: a plan that violates the contract, a plan
 whose file changed after approval, a payload that does not match the plan on disk, a plan
@@ -39,10 +39,43 @@ In one line: *the workflow may differ, the contract is stable, the adapter does 
 - If you change the plan format beyond the contract, the adapter **rejects** the plan with a
   clear error rather than guessing.
 
+## Requirements
+
+The adapter reacts to the `plannotator:plan-approved` event, so it needs three things to
+be useful:
+
+1. **Plannotator** installed, to plan and approve a plan that emits the event.
+2. **pi-goal** installed, to receive the handoff (`create_goal` -> `set_goal_tasks` ->
+   `update_goal paused`).
+3. A settings file declaring `{"enabled": true}` (project or global scope). Without it the
+   adapter stays silent by design.
+
 ## Install
 
-The extension is loaded from a directory that pi discovers, either the agent dir or a
-project extension directory. It declares its entry point in `package.json`:
+Install as a pi package from npm, git, or a local path:
+
+```bash
+# from npm (published)
+pi install npm:pi-plannotator-goal
+
+# per project instead of user-global
+pi install npm:pi-plannotator-goal --local
+
+# from git
+pi install git:github.com/birugh/pi-plannator-goal
+
+# from a local checkout
+pi install ./pi-plannotator-goal
+```
+
+Try it for one invocation without installing:
+
+```bash
+pi -e npm:pi-plannotator-goal
+pi -e /path/to/pi-plannotator-goal
+```
+
+The package declares its extension in `package.json`:
 
 ```json
 {
@@ -52,14 +85,15 @@ project extension directory. It declares its entry point in `package.json`:
 }
 ```
 
-To load it from an arbitrary path without installing:
+## Security
 
-```bash
-pi -e /path/to/pi-plannotator-goal
-```
+Decide for yourself:
 
-It is enabled per project by a settings file, and it is disabled unless that file says
-`{"enabled": true}` explicitly. See `docs/CONFIG.md`.
+> Pi loads extensions with full process permissions. Review the source before
+> installing; load only from sources you trust.
+
+This adapter is gated by a settings file, but the same trust rule applies as to any
+extension.
 
 ## Configuration
 
@@ -126,4 +160,5 @@ No test touches the real agent dir: each one builds a temp `cwd` and a temp
 
 ## License
 
-Private. Not published.
+Package published on npm. License is the repository owner's choice; no license file is
+committed yet.
