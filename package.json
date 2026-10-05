@@ -27,6 +27,7 @@
   "pi": {
     "extensions": ["./index.ts"]
   },
+  "license": "MIT",
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "node --test \"test/*.test.ts\""

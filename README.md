@@ -160,5 +160,4 @@ No test touches the real agent dir: each one builds a temp `cwd` and a temp
 
 ## License
 
-Package published on npm. License is the repository owner's choice; no license file is
-committed yet.
+MIT — see [`LICENSE`](LICENSE).
