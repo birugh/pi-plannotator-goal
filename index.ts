@@ -61,9 +61,10 @@ function defaultRunValidator(validatePath: string, planPath: string): string | n
 
 /** The child process stdout of a failed exec, when the thrown value carries it. */
 function readErrorStdout(error: unknown): string {
+  // execFileSync throws an Error whose captured pipes are non-enumerable properties. They
+  // are read through a descriptor lookup, so no assertion is needed on the thrown value.
   if (!(error instanceof Error)) return "";
-  // execFileSync throws an Error carrying the captured pipes as Buffer properties.
-  const { stdout } = error as { stdout?: unknown };
+  const stdout = Object.getOwnPropertyDescriptor(error, "stdout")?.value;
   if (typeof stdout === "string") return stdout;
   if (Buffer.isBuffer(stdout)) return stdout.toString("utf8");
   return "";
