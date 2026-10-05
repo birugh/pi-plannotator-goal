@@ -1,6 +1,6 @@
 {
   "name": "pi-plannotator-goal",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "type": "module",
   "description": "Universal Goal Adapter: turns an approved Plannotator plan into a pi-goal handoff, for any workflow that follows the Universal Adapter Contract",
   "keywords": [
@@ -11,6 +11,14 @@
     "goals",
     "plan"
   ],
+  "homepage": "https://github.com/birugh/pi-plannotator-goal#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/birugh/pi-plannotator-goal.git"
+  },
+  "bugs": {
+    "url": "https://github.com/birugh/pi-plannotator-goal/issues"
+  },
   "files": [
     "index.ts",
     "config.ts",
