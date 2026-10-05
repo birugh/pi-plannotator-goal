@@ -1,2 +1,0 @@
-adapter skip/reject checks: 5 assertions
-ALL ADAPTER SKIP CHECKS PASS

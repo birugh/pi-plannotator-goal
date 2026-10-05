@@ -64,27 +64,18 @@ mocking. No test stubs an external validator, because the adapter has no validat
 `test/workflow-compat.test.ts` hands off fixtures with no `validate.mjs` anywhere,
 proving the config key is gone and the contract parser is the only validation.
 
-## Evidence
-
-`test/EVIDENCE.md` pairs the recorded pre-refactor output with the post-refactor output for
-each of the three ported probes. The raw captures are in `test/baseline/`. The three diffs are
-empty: same assertion counts, same case names, same summary lines.
-
-`test/fixtures/m3-handoff-evidence.md` and `.jsonl` are the recorded wheel evidence from the
-M3 sessions; two failure cases assert against them instead of re-running a real pi-goal
-session.
-
 ## Repository layout
 
 ```text
 index.ts, types.ts, config.ts, log.ts, plan-text.ts, ir.ts,
   goals-pool.ts, goals.ts, handoff.ts     the nine modules
-docs/                                     the four topic docs plus findings
-plans/M-06-pi-plannotator-goal.md         the plan this repository implements
+docs/                                     the contract, config, pipeline, findings, and audit
 test/*.test.ts                            the suite
-test/baseline/                            pre and post probe captures
-test/fixtures/                            plans, goal headers, recorded evidence
+test/fixtures/                            example plans, goal headers, and probe evidence
 ```
+
+The `plans/` and `test/baseline/` directories that existed during the original migration were
+historical artifacts only; they are not part of the universal adapter and have been removed.
 
 ## Verifying by hand
 

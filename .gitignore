@@ -5,4 +5,12 @@ node_modules/
 .vscode/
 *.swp
 .pi/
+
+# Build / distribution artifacts
 *.tgz
+
+# Legacy artifacts (no longer tracked; kept ignored so they cannot accidentally return)
+/plans/
+/test/baseline/
+/test/EVIDENCE.md
+*.txt
