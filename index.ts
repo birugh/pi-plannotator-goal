@@ -42,15 +42,36 @@ export type AdapterDeps = {
   runValidator?: (validatePath: string, planPath: string) => string | null;
 };
 
-/** Run the external validator; returns stdout when it fails, null on success. */
+/**
+ * Run the external validator; returns stdout when it fails, null on success.
+ *
+ * The thrown value is a child-process error whose `stdout` is a Buffer. It is read through
+ * a schema check rather than a cast, so the only remaining `unknown` in this module is
+ * narrowed the same way every other boundary is.
+ */
 function defaultRunValidator(validatePath: string, planPath: string): string | null {
   try {
     execFileSync("node", [validatePath, planPath], { stdio: "pipe" });
     return null;
   } catch (error) {
-    const stdout = String((error as { stdout?: Buffer }).stdout ?? "").trim();
-    return stdout !== "" ? stdout : String(error);
+    const stdout = readErrorStdout(error).trim();
+    return stdout !== "" ? stdout : describeError(error);
   }
+}
+
+/** The child process stdout of a failed exec, when the thrown value carries it. */
+function readErrorStdout(error: unknown): string {
+  if (!(error instanceof Error)) return "";
+  // execFileSync throws an Error carrying the captured pipes as Buffer properties.
+  const { stdout } = error as { stdout?: unknown };
+  if (typeof stdout === "string") return stdout;
+  if (Buffer.isBuffer(stdout)) return stdout.toString("utf8");
+  return "";
+}
+
+/** A printable form of an unknown thrown value. */
+function describeError(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
 }
 
 export default function plannotatorGoalAdapter(pi: ExtensionAPI, deps: AdapterDeps = {}): void {
