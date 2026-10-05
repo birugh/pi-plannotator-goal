@@ -124,7 +124,16 @@ function logLines(logPath: string): Array<Record<string, unknown>> {
     .trim()
     .split("\n")
     .filter(Boolean)
-    .map((l) => JSON.parse(l) as Record<string, unknown>);
+    .map(parseLogLine);
+}
+
+/** Parse one JSONL line, keeping the same no-assertion rule as the modules. */
+function parseLogLine(line: string): Record<string, unknown> {
+  const parsed: unknown = JSON.parse(line);
+  if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
+    throw new Error(`log line is not a JSON object: ${line}`);
+  }
+  return Object.fromEntries(Object.entries(parsed));
 }
 
 describe("factory handoff path", () => {
