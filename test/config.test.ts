@@ -100,20 +100,23 @@ describe("scope precedence", () => {
   it("defaults come from the agent dir when no file declares them", () => {
     const { cwd, agentDir } = makeDirs();
     const config = resolveConfig(cwd, { PI_CODING_AGENT_DIR: agentDir }, "/nonexistent-home");
-    assert.equal(config.validatePath, join(agentDir, "plans", "validate.mjs"));
     assert.equal(config.logPath, join(agentDir, "plans", "plannotator-goal.jsonl"));
-    assert.equal(config.sources.validatePath, "default");
+    assert.equal(config.sources.logPath, "default");
   });
 
-  it("a relative override resolves against cwd, an absolute one is kept", () => {
+  it("a relative logPath override resolves against cwd, an absolute one is kept", () => {
     const { cwd, agentDir } = makeDirs();
-    writeConfig(
-      projectConfigPath(cwd),
-      JSON.stringify({ logPath: "logs/adapter.jsonl", validatePath: "/opt/validate.mjs" }),
-    );
+    writeConfig(projectConfigPath(cwd), JSON.stringify({ logPath: "logs/adapter.jsonl" }));
     const config = resolveConfig(cwd, { PI_CODING_AGENT_DIR: agentDir }, "/nonexistent-home");
     assert.equal(config.logPath, join(cwd, "logs", "adapter.jsonl"));
-    assert.equal(config.validatePath, "/opt/validate.mjs");
+  });
+
+  it("an unknown validatePath key is tolerated as an extra and ignored", () => {
+    const { cwd, agentDir } = makeDirs();
+    writeConfig(projectConfigPath(cwd), JSON.stringify({ enabled: true, validatePath: "/opt/validate.mjs" }));
+    const config = resolveConfig(cwd, { PI_CODING_AGENT_DIR: agentDir }, "/nonexistent-home");
+    assert.equal(config.enabled, true);
+    assert.equal("validatePath" in config, false, "the adapter exposes no validator key any more");
   });
 
   it("honors PI_CODING_AGENT_DIR, absolute and home-relative", () => {

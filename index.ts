@@ -10,16 +10,17 @@
  *      flight and `isIdle()` is false at that instant
  *   4. resolve the plan path against the event cwd
  *   5. re-read the plan and refuse if it differs from the approved payload
- *   6. run the external validator
- *   7. build the IR (rejection is a value)
- *   8. resolve the real goal pool and stop if an open goal is present
- *   9. log and hand off, choosing `steer` or `followUp` from the measured idle state
+ *   6. build the IR (rejection is a value); the parser enforces the Universal Adapter
+ *      Contract, which is the only validation the handoff requires
+ *   7. resolve the real goal pool and stop if an open goal is present
+ *   8. log and hand off, choosing `steer` or `followUp` from the measured idle state
  *
- * Every refusal leaves the session untouched: no message is sent and no goal is created.
+ * A workflow MAY run its own validator during its planning phase; that is workflow-level
+ * validation and never a dependency of this adapter. Every refusal leaves the session
+ * untouched: no message is sent and no goal is created.
  */
 
 import { readFileSync } from "node:fs";
-import { execFileSync } from "node:child_process";
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import {
   parsePayload,
@@ -39,45 +40,10 @@ import { reject, type RejectReason } from "./types.ts";
 
 export type AdapterDeps = {
   env?: NodeJS.ProcessEnv;
-  runValidator?: (validatePath: string, planPath: string) => string | null;
 };
-
-/**
- * Run the external validator; returns stdout when it fails, null on success.
- *
- * The thrown value is a child-process error whose `stdout` is a Buffer. It is read through
- * a schema check rather than a cast, so the only remaining `unknown` in this module is
- * narrowed the same way every other boundary is.
- */
-function defaultRunValidator(validatePath: string, planPath: string): string | null {
-  try {
-    execFileSync("node", [validatePath, planPath], { stdio: "pipe" });
-    return null;
-  } catch (error) {
-    const stdout = readErrorStdout(error).trim();
-    return stdout !== "" ? stdout : describeError(error);
-  }
-}
-
-/** The child process stdout of a failed exec, when the thrown value carries it. */
-function readErrorStdout(error: unknown): string {
-  // execFileSync throws an Error whose captured pipes are non-enumerable properties. They
-  // are read through a descriptor lookup, so no assertion is needed on the thrown value.
-  if (!(error instanceof Error)) return "";
-  const stdout = Object.getOwnPropertyDescriptor(error, "stdout")?.value;
-  if (typeof stdout === "string") return stdout;
-  if (Buffer.isBuffer(stdout)) return stdout.toString("utf8");
-  return "";
-}
-
-/** A printable form of an unknown thrown value. */
-function describeError(error: unknown): string {
-  return error instanceof Error ? error.message : String(error);
-}
 
 export default function plannotatorGoalAdapter(pi: ExtensionAPI, deps: AdapterDeps = {}): void {
   const env = deps.env ?? process.env;
-  const runValidator = deps.runValidator ?? defaultRunValidator;
   let sessionCtx: ExtensionContext | undefined;
 
   pi.on("session_start", (_event, startCtx) => {
@@ -128,14 +94,6 @@ export default function plannotatorGoalAdapter(pi: ExtensionAPI, deps: AdapterDe
       if (payload.planContent !== undefined && payload.planContent !== text) {
         return rejectWith(
           reject("plan-changed", "Plan file on disk differs from the approved payload.", planPath),
-          planPath,
-        );
-      }
-
-      const validationFailure = runValidator(config.validatePath, planPath);
-      if (validationFailure !== null) {
-        return rejectWith(
-          reject("validator-failed", `plans/validate.mjs failed:\n${validationFailure}`, planPath),
           planPath,
         );
       }

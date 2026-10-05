@@ -34,9 +34,6 @@ export function resolveAgentDir(
   return join(homeDir, ".pi", "agent");
 }
 
-export function defaultValidatePath(agentDir: string): string {
-  return join(agentDir, "plans", "validate.mjs");
-}
 
 /**
  * The historical M3 sink was <agent dir>/plans/probes/m3-adapter-log.jsonl. That directory
@@ -63,7 +60,6 @@ export function globalConfigPath(agentDir: string): string {
 export const ConfigSchema = Type.Object(
   {
     enabled: Type.Optional(Type.Boolean()),
-    validatePath: Type.Optional(Type.String()),
     logPath: Type.Optional(Type.String()),
   },
   { additionalProperties: true },
@@ -91,9 +87,8 @@ export type ConfigSource = "project" | "global" | "default";
 
 export type ResolvedConfig = {
   enabled: boolean;
-  validatePath: string;
   logPath: string;
-  sources: { enabled: ConfigSource; validatePath: ConfigSource; logPath: ConfigSource };
+  sources: { enabled: ConfigSource; logPath: ConfigSource };
   /** Human-readable notes about files that were ignored, surfaced in the log. */
   notes: string[];
 };
@@ -151,7 +146,7 @@ export function resolveConfig(
 
   const notes = [project.note, global.note].filter((n): n is string => n !== null);
 
-  const pick = <K extends "enabled" | "validatePath" | "logPath">(
+  const pick = <K extends "enabled" | "logPath">(
     key: K,
   ): { value: AdapterConfig[K] | undefined; source: ConfigSource } => {
     const fromProject = project.config?.[key];
@@ -162,16 +157,7 @@ export function resolveConfig(
   };
 
   const enabled = pick("enabled");
-  const validate = pick("validatePath");
   const log = pick("logPath");
-
-  // A relative override is resolved against cwd so a project-scoped file stays portable.
-  const validatePath =
-    validate.value === undefined
-      ? defaultValidatePath(agentDir)
-      : isAbsolute(validate.value)
-        ? normalize(validate.value)
-        : resolve(cwd, validate.value);
 
   const logPath =
     log.value === undefined
@@ -182,11 +168,9 @@ export function resolveConfig(
 
   return {
     enabled: enabled.value === true,
-    validatePath,
     logPath,
     sources: {
       enabled: enabled.source,
-      validatePath: validate.source,
       logPath: log.source,
     },
     notes,

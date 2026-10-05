@@ -7,7 +7,7 @@
 
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { parsePlanText, referencedParents, TASK_ID_RE } from "../plan-text.ts";
+import { CONTRACT_VERSION, parsePlanText, referencedParents, TASK_ID_RE } from "../plan-text.ts";
 
 const PLAN = `# M-90 Probe gate test
 
@@ -169,6 +169,82 @@ describe("parsePlanText rejections", () => {
     const result = parsePlanText(text);
     assert.equal(result.ok, true);
     if (result.ok) assert.deepEqual(result.value.requirements, []);
+  });
+});
+
+describe("Universal Adapter Contract v1 section-awareness", () => {
+  it("exposes the contract version the parser implements", () => {
+    assert.equal(CONTRACT_VERSION, "v1");
+  });
+
+  it("never turns a checkbox inside Notes into a task", () => {
+    const text = PLAN.replace(
+      "## Context\n\nProse the reviewer reads.",
+      "## Context\n\nProse the reviewer reads.\n- [ ] T-99 This is a note, not a task",
+    );
+    const { tasks } = parse(text);
+    assert.ok(!tasks.some((t) => t.id === "T-99"), "a Notes checkbox is not a task");
+    assert.equal(tasks.length, 5, "only the S-section tasks survive");
+  });
+
+  it("never turns a checkbox inside a fenced code block into a task", () => {
+    const text = `${PLAN}\n\n## Documentation\n\n\`\`\`markdown\n- [ ] T-98 Example checkbox in a fence\n\`\`\`\n`;
+    const { tasks } = parse(text);
+    assert.ok(!tasks.some((t) => t.id === "T-98"));
+    assert.equal(tasks.length, 5);
+  });
+
+  it("ignores checkboxes in an unknown/unrelated section", () => {
+    const text = `${PLAN}\n\n## References\n\n- [ ] T-97 Reference material\n`;
+    const { tasks } = parse(text);
+    assert.ok(!tasks.some((t) => t.id === "T-97"));
+    assert.equal(tasks.length, 5);
+  });
+
+  it("treats a checkbox-style line inside a code fence as prose (no reject)", () => {
+    const text = `${PLAN}\n\n\`\`\`text\n- [ ] shorthand example\n\`\`\`\n`;
+    const result = parsePlanText(text);
+    assert.equal(result.ok, true, "content inside a fence must not reject");
+    if (result.ok) assert.equal(result.value.tasks.length, 5);
+  });
+
+  it("rejects a checkbox-shaped line stranded before any top-level section", () => {
+    const text = `- [ ] T-96 orphaned\n\n${PLAN}`;
+    const result = parsePlanText(text);
+    assert.equal(result.ok, false);
+    if (result.ok) return;
+    assert.equal(result.error.code, "stranded-checkbox");
+  });
+
+  it("malformed-task for a checkbox that does not match the task form inside a task section", () => {
+    const text = PLAN.replace("- [ ] T-02 Do the second thing", "- [ ] T-02");
+    const empty = parsePlanText(text);
+    assert.equal(empty.ok, false);
+    if (empty.ok) return;
+    assert.equal(empty.error.code, "empty-task-title", "checkbox with an empty title is empty-task-title");
+
+    // A checkbox whose closing bracket touches the id does not match the strict task
+    // form at all; the parser rejects it rather than guessing (contract: no mending).
+    const bad = PLAN.replace("- [ ] T-02 Do the second thing", "- [X]T-02 no space");
+    const mal = parsePlanText(bad);
+    assert.equal(mal.ok, false);
+    if (mal.ok) return;
+    assert.equal(mal.error.code, "malformed-task");
+  });
+
+  it("parses CRLF and LF identically", () => {
+    const crlf = PLAN.replace(/\n/g, "\r\n");
+    const parsed = parse(crlf);
+    assert.equal(parsed.tasks.length, 5);
+    assert.equal(parsed.goalLine, "Goal: exercise the milestone shape end to end.");
+    assert.equal(parsed.requirements.length, 2);
+  });
+
+  it("ignores content inside tildes fences as prose", () => {
+    const text = `${PLAN}\n\n~~~text\n- [ ] T-95 tilde example\n~~~\n`;
+    const result = parsePlanText(text);
+    assert.equal(result.ok, true);
+    if (result.ok) assert.ok(!result.value.tasks.some((t) => t.id === "T-95"));
   });
 });
 

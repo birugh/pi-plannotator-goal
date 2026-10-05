@@ -57,7 +57,7 @@ test("2. missing parent -> reject", () => {
 });
 
 test("3. depth > 1 -> reject, with the runtime rejection captured", () => {
-  assert.match(rejectReason(`${plan}\n- [ ] T-01.1.9 too deep\n`), /subtask depth/);
+  assert.match(rejectReason(`${plan}\n## S-99 Extra\n- [ ] T-01.1.9 too deep\n`), /subtask depth/);
   assert.match(
     evidence,
     /subtask nesting depth 2, exceeding the configured maximum of 1/,
@@ -68,7 +68,7 @@ test("3. depth > 1 -> reject, with the runtime rejection captured", () => {
 
 test("4. more than 50 tasks -> reject", () => {
   assert.match(
-    rejectReason(`${plan}\n${Array.from({ length: 60 }, (_, i) => `- [ ] T-${201 + i} extra`).join("\n")}`),
+    rejectReason(`${plan}\n## S-99 Extra\n${Array.from({ length: 60 }, (_, i) => `- [ ] T-${201 + i} extra`).join("\n")}`),
     /allows at most 50/,
   );
   results.push("4. >50 tasks -> reject — PASS");

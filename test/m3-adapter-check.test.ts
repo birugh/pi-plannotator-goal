@@ -122,14 +122,18 @@ test("reject matrix matches the probe", () => {
       ),
       /Duplicate task id/,
     ],
-    ["depth > 1", `${plan}\n- [ ] T-90.1.1 too deep\n`, /subtask depth/],
+    [
+      "depth > 1",
+      `${plan}\n## S-91 Extra\n- [ ] T-90.1.1 too deep\n`,
+      /subtask depth/,
+    ],
     ["missing parent", plan.replace(/^([-*]\s*\[[ xX]\]\s*)(T-90\.1)\b/m, "$1T-42.1"), /references missing parent/],
     ["story as task", plan.replace(/^([-*]\s*\[[ xX]\]\s*)T-90\b/m, "$1S-90"), /not an executable task/],
     ["no CR bullet", plan.replace(/^[-*]\s*CR-\d+.*$/gm, ""), /no '- CR-/],
     ["no tasks", dropTasks(plan), /no '- \[ \] T-/],
     [
       "too many tasks",
-      `${plan}\n${Array.from({ length: 60 }, (_, i) => `- [ ] T-${101 + i} extra`).join("\n")}`,
+      `${plan}\n## S-91 Extra\n${Array.from({ length: 60 }, (_, i) => `- [ ] T-${101 + i} extra`).join("\n")}`,
       /allows at most \d+/,
     ],
   ];

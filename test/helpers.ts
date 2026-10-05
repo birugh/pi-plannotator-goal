@@ -99,7 +99,7 @@ export async function emitPlanApproved(
     getActiveTools: () => [],
   };
 
-  const deps: AdapterDeps = { env: { PI_CODING_AGENT_DIR: env.agentDir }, runValidator: () => null, ...options.deps };
+  const deps: AdapterDeps = { env: { PI_CODING_AGENT_DIR: env.agentDir }, ...options.deps };
   plannotatorGoalAdapter(pi as never, deps);
   for (const handler of handlers) handler(payload);
   await settle();

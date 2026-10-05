@@ -2,9 +2,8 @@
  * End-to-end factory test: drive index.ts the way pi does, with a fake host.
  *
  * Every case runs against a temp cwd and a temp agent dir (PI_CODING_AGENT_DIR), so the
- * real ~/.pi/agent is never read or written. The external validator is either stubbed
- * through deps.runValidator or, in one case, pointed at the real plans/validate.mjs via
- * the config key to prove the wiring is used.
+ * real ~/.pi/agent is never read or written. There is no external validator: the plan
+ * parser enforces the Universal Adapter Contract, which is the only validation required.
  */
 
 import assert from "node:assert/strict";
@@ -93,12 +92,12 @@ function setup(config: Record<string, unknown> | null = { enabled: true }, deps:
   if (config !== null) {
     writeFileSync(
       join(agentDir, "plannotator-goal.json"),
-      JSON.stringify({ logPath, validatePath: join(agentDir, "no-such-validator.mjs"), ...config }),
+      JSON.stringify({ logPath, ...config }),
     );
   }
 
   const env = { PI_CODING_AGENT_DIR: agentDir };
-  const fullDeps: AdapterDeps = { env, runValidator: () => null, ...deps };
+  const fullDeps: AdapterDeps = { env, ...deps };
 
   return {
     cwd,
@@ -185,11 +184,10 @@ describe("factory handoff path", () => {
     assert.equal(idleRun.sent[0]?.deliverAs, "followUp");
   });
 
-  it("uses the real plans/validate.mjs when the config key points at it", async () => {
-    // Read-only use of the dotfiles validator: proves the config key is the wiring.
-    const e = setup({ enabled: true, validatePath: "/home/biru/.pi/agent/plans/validate.mjs" }, { runValidator: undefined });
+  it("hands off with no validator at all — no validate.mjs anywhere", async () => {
+    const e = setup();
     const { sent } = await e.emit({ cwd: e.cwd, planFilePath: "plans/M-90.md", planContent: VALID_PLAN });
-    assert.equal(sent.length, 1, "a plan the real validator accepts is handed off");
+    assert.equal(sent.length, 1, "the adapter needs no external validator to hand off");
   });
 
   it("returns 2 tasks for the fixture, proving ids are not renamed", async () => {
@@ -235,13 +233,16 @@ describe("factory refusals", () => {
     assert.match(String(logLines(e.logPath)[0]?.text ?? ""), /could not be read from disk/);
   });
 
-  it("refuses when the validator fails, quoting its output", async () => {
-    const e = setup({ enabled: true }, { runValidator: () => "FAIL: bad plan" });
-    const { sent } = await e.emit({ cwd: e.cwd, planFilePath: "plans/M-90.md", planContent: VALID_PLAN });
-    assert.equal(sent.length, 0);
+  it("walks plan-content pitfalls only through the contract (no validator stage)", async () => {
+    // A plan whose checkboxes sit in an unknown section must be rejected by the parser
+    // and produce a typed log entry, not a handoff.
+    const e = setup();
+    const weird = `${VALID_PLAN.split("## S-01 One story")[0] ?? ""}## Notes\n\n- [ ] T-01 First task\n`;
+    writeFileSync(e.planPath, weird);
+    const { sent } = await e.emit({ cwd: e.cwd, planFilePath: "plans/M-90.md", planContent: weird });
     const entry = logLines(e.logPath).find((x) => x.kind === "reject");
-    assert.match(String(entry?.text ?? ""), /plans\/validate\.mjs failed/);
-    assert.match(String(entry?.text ?? ""), /FAIL: bad plan/);
+    assert.equal(sent.length, 0, "a contract violation stops the handoff");
+    assert.ok(entry, "the refusal is logged");
   });
 
   it("refuses a plan with no task checkboxes", async () => {
