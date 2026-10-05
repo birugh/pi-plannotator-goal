@@ -1,9 +1,29 @@
 {
   "name": "pi-plannotator-goal",
   "version": "0.1.0",
-  "private": true,
   "type": "module",
-  "description": "Plannotator plan-approved adapter that hands an approved milestone plan to pi-goal",
+  "description": "Universal Goal Adapter: turns an approved Plannotator plan into a pi-goal handoff, for any workflow that follows the Universal Adapter Contract",
+  "keywords": [
+    "pi-package",
+    "pi-extension",
+    "plannotator",
+    "pi-goal",
+    "goals",
+    "plan"
+  ],
+  "files": [
+    "index.ts",
+    "config.ts",
+    "goals-pool.ts",
+    "goals.ts",
+    "handoff.ts",
+    "ir.ts",
+    "log.ts",
+    "plan-text.ts",
+    "types.ts",
+    "docs",
+    "README.md"
+  ],
   "pi": {
     "extensions": ["./index.ts"]
   },
