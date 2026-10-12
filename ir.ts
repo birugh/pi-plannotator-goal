@@ -83,7 +83,7 @@ export function buildGoalIR(
     return fail(
       reject(
         "objective-too-long",
-        `Objective would be ${objective.length} chars; the safe adapter limit is ${MAX_OBJECTIVE}. Shorten Scope/Risks prose in PLAN.md.`,
+        `Objective would be ${objective.length} chars; the safe adapter limit is ${MAX_OBJECTIVE}. The objective folds the Goal line, the Scope / Out of Scope / Risks sections, and the contract line. Move detail to Context / Technical Approach / Proposed Architecture (not folded), or shorten that prose.`,
       ),
     );
   }
@@ -92,7 +92,7 @@ export function buildGoalIR(
     return fail(
       reject(
         "contract-too-long",
-        `Verification contract line is ${contract.length} chars; the safe adapter limit is ${MAX_CONTRACT}. Shorten the CR texts.`,
+        `Verification contract line is ${contract.length} chars; the safe adapter limit is ${MAX_CONTRACT}. Shorten the CR texts in '## Completion Requirements'.`,
       ),
     );
   }

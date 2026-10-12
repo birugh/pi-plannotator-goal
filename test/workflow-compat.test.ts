@@ -69,7 +69,7 @@ test("Fixture D — a custom format outside the contract stops with a clear erro
   const env = makeEnv();
   const { sent, notifies } = await run(env, "wf-d-custom-invalid.md");
   assert.equal(sent.length, 0, "no handoff for a non-compliant format");
-  assert.match(notifies[0]?.message ?? "", /M3 adapter rejected PLAN\.md/);
+  assert.match(notifies[0]?.message ?? "", /Plan rejected before pi-goal handoff\./);
   const entry = findLog(env.logPath, "reject");
   assert.ok(entry, "the refusal is logged");
   assert.match(String(entry?.text ?? ""), /outside '## S-/);
@@ -119,7 +119,7 @@ test("Fixture F — missing required structure is rejected", async () => {
     { idle: true },
   );
   assert.equal(sent.length, 0, "a plan with no task structure must be rejected");
-  assert.match(notifies[0]?.message ?? "", /M3 adapter rejected PLAN\.md/);
+  assert.match(notifies[0]?.message ?? "", /Plan rejected before pi-goal handoff\./);
   const entry = findLog(env.logPath, "reject");
   assert.ok(entry, "the refusal is logged");
   assert.match(String(entry?.text ?? ""), /no '- \[ \] T-<nn>' task checkbox/);

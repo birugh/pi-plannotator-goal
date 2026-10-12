@@ -119,13 +119,13 @@ export function buildExistingGoalReport(planPath: string, open: OpenGoal[]): str
     (g) => `- ${g.id} · ${g.status} · ${g.title}${g.activePath ? `\n  ${g.activePath}` : ""}`,
   );
   return [
-    "M3 adapter stopped before handoff: an existing open goal is present.",
+    "Pi-goal handoff stopped: an existing open goal is present.",
     "",
     `Plan:   ${planPath}`,
     "Open goals:",
     ...lines,
     "",
-    "Effect: No message was sent. No pi-goal goal was created.",
+    "Effect: No goal was created. The session keeps running; nothing was changed.",
     "Action: choose one, then resubmit the plan through Plannotator:",
     "  /goal-focus <id>   work on that goal instead",
     "  /goal-unfocus      leave it open, unfocus it",

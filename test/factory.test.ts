@@ -221,7 +221,7 @@ describe("factory refusals", () => {
       planContent: `${VALID_PLAN}\n`,
     });
     assert.equal(sent.length, 0);
-    assert.match(notifies[0]?.message ?? "", /M3 adapter rejected/);
+    assert.match(notifies[0]?.message ?? "", /Plan rejected before pi-goal handoff\./);
     const entry = logLines(e.logPath).find((x) => x.kind === "reject");
     assert.match(String(entry?.text ?? ""), /differs from the approved payload/);
   });
@@ -272,7 +272,7 @@ describe("factory refusals", () => {
     const text = String(entry?.text ?? "");
     assert.match(text, /probe-open/);
     assert.ok(!text.includes("probe-retired"), "an archived goal is not reported as open");
-    assert.ok(notifies[0]?.message.startsWith("M3 adapter stopped before handoff"), "the user is notified");
+    assert.ok(notifies[0]?.message.startsWith("Pi-goal handoff stopped: an existing open goal is present"), "the user is notified");
   });
 
   it("refuses when the goal pool settings are malformed", async () => {
@@ -294,8 +294,8 @@ describe("factory refusals", () => {
     const e = setup();
     const { sent, notifies } = await e.emit({});
     assert.equal(sent.length, 0);
-    // The notice is the first three lines of the report; the reason is the fourth.
-    assert.match(notifies[0]?.message ?? "", /M3 adapter rejected PLAN\.md\.\s+Plan:\s+\(unresolved\)/);
+    // The notice is the headline plus the Reason line.
+    assert.match(notifies[0]?.message ?? "", /Plan rejected before pi-goal handoff\.\s+Reason:\s+plan-approved event had no cwd\/planFilePath/);
     assert.match(String(logLines(e.logPath)[0]?.text ?? ""), /no cwd\/planFilePath/);
   });
 
@@ -316,5 +316,44 @@ describe("factory refusals", () => {
     );
     assert.equal(sent.length, 1, "handoff still works without a cached ctx");
     assert.equal(sent[0]?.deliverAs, "steer", "without a ctx there is no idle reading");
+  });
+});
+describe("refusal UX contract", () => {
+  it("surfaces the Reason in the session notification, not just the plan path", async () => {
+    const e = setup();
+    const { notifies } = await e.emit({ cwd: e.cwd, planFilePath: "plans/missing.md" });
+    const notice = notifies[0]?.message ?? "";
+    assert.match(notice, /Plan rejected before pi-goal handoff\./);
+    assert.match(notice, /Reason: plan file could not be read from disk\./i);
+    assert.ok(!/M3/.test(notice), "the notice no longer carries the M3 legacy wording");
+  });
+
+  it("keeps the session running: no abort/stop call, and a fixed plan resubmits cleanly", async () => {
+    const e = setup();
+    // A drift between payload and disk is refused without touching the session.
+    const drift = await e.emit({
+      cwd: e.cwd,
+      planFilePath: "plans/M-90.md",
+      planContent: `${VALID_PLAN}\n`,
+    });
+    assert.equal(drift.sent.length, 0);
+    assert.equal(drift.notifies.length, 1, "exactly one notification, no abort");
+
+    // The user fixes the plan and resubmits through the same adapter: handoff works.
+    const fixed = await e.emit(
+      { cwd: e.cwd, planFilePath: "plans/M-90.md", planContent: VALID_PLAN },
+      { idle: true },
+    );
+    assert.equal(fixed.sent.length, 1, "the resubmission after a refusal hands off");
+    assert.match(fixed.sent[0]?.message ?? "", /- T-01 — First task/);
+  });
+
+  it("summarizeForNotice falls back to the first lines when there is no Reason line", async () => {
+    const { summarizeForNotice } = await import("../handoff.ts");
+    assert.equal(summarizeForNotice("A\nB\nC\nD"), "A B C");
+    assert.equal(
+      summarizeForNotice("Head\n\nPlan:   x\nReason: because\nEffect: none"),
+      "Head Reason: because",
+    );
   });
 });

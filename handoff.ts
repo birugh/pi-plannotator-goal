@@ -1,10 +1,12 @@
 /**
  * Message construction for the two things the adapter says to the agent:
- * the handoff instruction, and the rejection notice.
+ * the handoff instruction, and the refusal notice.
  *
- * Strings are byte-for-byte the M3 adapter's: the migrated probes and the recorded
- * evidence assert on their wording, and the handoff text is a contract with the model
- * (it dictates create_goal then set_goal_tasks then pause). Treat as frozen.
+ * The handoff text is a contract with the model (it dictates create_goal then
+ * set_goal_tasks then pause), so its wording is treated as frozen. The refusal notice is
+ * user-facing UX: it names the rejection, shows the Reason, and states that the session
+ * keeps running so the user can fix the plan and resubmit. A refusal never aborts the
+ * session and never calls any stop/abort API.
  */
 
 import type { GoalIR } from "./types.ts";
@@ -65,16 +67,22 @@ export function buildHandoffMessage(ir: GoalIR): string {
  */
 export function buildRejectionMessage(planPath: string | null, reason: string): string {
   return [
-    "M3 adapter rejected PLAN.md.",
+    "Plan rejected before pi-goal handoff.",
     "",
     `Plan:   ${planPath ?? "(unresolved)"}`,
     `Reason: ${reason}`,
-    "Effect: No message was sent. No pi-goal goal was created.",
-    "Fix:    Correct the plan file, re-validate, and resubmit through Plannotator.",
+    "Effect: No goal was created. The session keeps running; you can fix the plan and resubmit.",
+    "Fix:    Apply the reason above to the plan file, re-run the validator, then resubmit through Plannotator.",
   ].join("\n");
 }
 
-/** The one-line session notification: the first three lines of a longer report. */
+/**
+ * The session notification: the headline plus the Reason line, so the user never sees a
+ * rejection without the actionable cause. Falls back to the first three lines when no
+ * Reason line exists.
+ */
 export function summarizeForNotice(text: string): string {
-  return text.split("\n").slice(0, 3).join(" ");
+  const lines = text.split("\n");
+  const reason = lines.find((l) => l.startsWith("Reason:"));
+  return reason !== undefined ? `${lines[0] ?? ""} ${reason}` : lines.slice(0, 3).join(" ");
 }

@@ -111,8 +111,8 @@ section it appears in. Parentage is by id only.
 
 ## Unknown and malformed content
 
-The parser is fail-closed. Any of these rejects the plan, sends no message, and creates no
-goal:
+The parser is fail-closed. Any of these rejects the plan: no goal is created, and the
+session keeps running with a notification naming the cause:
 
 - no `Goal: <outcome>` line;
 - no task section at all;
@@ -175,8 +175,9 @@ structure. Nothing in this assembly is decided by an LLM.
 
 "Essential part" means the goal line, the task sections, the task lines, the ids, or the
 requirements. A plan that fails the contract produces a typed refusal with a message naming
-the failing element, and the session stays untouched: no message is sent, no goal is
-created.
+the failing element and a session notification showing the `Reason:`. The session stays
+running — no goal is created and no abort is issued — so the user can fix the plan and
+resubmit through Plannotator.
 
 ## Workflow validators
 

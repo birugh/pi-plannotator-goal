@@ -16,7 +16,9 @@ pi-goal handoff, and pi-goal owns execution.
 The point of the adapter is the refusal paths: a plan that violates the contract, a plan
 whose file changed after approval, a payload that does not match the plan on disk, a plan
 that breaks a pi-goal limit, or an already-open goal all stop the handoff and report why. No
-message is sent and no goal is created in any of those cases.
+goal is created in any of those cases, but the session keeps running: the adapter only logs
+and notifies (with the `Reason:` visible in the notification), never aborts, so the user can
+fix the plan and resubmit through Plannotator.
 
 ## Universal Adapter Contract
 

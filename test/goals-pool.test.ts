@@ -320,11 +320,11 @@ describe("buildExistingGoalReport", () => {
       { id: "g1", status: "paused", title: "First", activePath: ".pi/goals/a.md", file: "/tmp/a.md" },
       { id: "g2", status: "unknown", title: "Second", activePath: null, file: "/tmp/b.md" },
     ]);
-    assert.match(report, /stopped before handoff: an existing open goal is present/);
+    assert.match(report, /Pi-goal handoff stopped: an existing open goal is present/);
     assert.match(report, /Plan:   \/tmp\/plans\/M-01\.md/);
     assert.match(report, /- g1 · paused · First/);
     assert.match(report, /- g2 · unknown · Second/);
-    assert.match(report, /No message was sent\. No pi-goal goal was created\./);
+    assert.match(report, /No goal was created\. The session keeps running; nothing was changed\./);
     for (const cmd of ["/goal-focus", "/goal-unfocus", "/goal-clear"]) {
       assert.ok(report.includes(cmd), cmd);
     }

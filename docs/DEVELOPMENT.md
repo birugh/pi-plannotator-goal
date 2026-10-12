@@ -13,7 +13,7 @@ Nine TypeScript modules at the repository root. `package.json` points pi at `ind
 | `ir.ts` | pi-goal limits and IR assembly: `buildGoalIR` returning `Result<GoalIR, RejectReason>` |
 | `goals-pool.ts` | pool resolution: `goalsRoot` precedence, settings path overrides, value validation |
 | `goals.ts` | pool reading: which files are open goals, header parsing, the existing-goal report |
-| `handoff.ts` | the two messages: the handoff instruction and the rejection notice |
+| `handoff.ts` | the two messages: the handoff instruction and the refusal notice (headline + `Reason:`, session keeps running after a refusal) |
 | `index.ts` | the factory: wiring, ordering, and the only place with I/O side effects |
 
 ## Design rules

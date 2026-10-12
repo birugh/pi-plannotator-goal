@@ -107,7 +107,7 @@ test("7. existing open goal -> adapter stops before sendUserMessage", () => {
     "an archived goal is retired even when its status is not complete",
   );
   const report = buildExistingGoalReport(PLAN_PATH, open);
-  assert.match(report, /No message was sent\. No pi-goal goal was created\./);
+  assert.match(report, /No goal was created\. The session keeps running; nothing was changed\./);
   assert.match(report, /\/goal-focus|\/goal-unfocus|\/goal-clear/);
   for (const g of open) assert.ok(report.includes(g.id), `report lists ${g.id}`);
   results.push("7. existing open goal -> adapter stops BEFORE sendUserMessage (runtime) — PASS");

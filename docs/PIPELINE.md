@@ -66,6 +66,22 @@ session notification and written to the log.
 
 Refusals are values, not exceptions: every helper returns `Result<T, RejectReason>`.
 
+## Refusal UX
+
+Every refusal follows the same shape: the adapter logs a `reject` (or `existing-goal-stop`)
+line and sends a session notification built from `buildRejectionMessage` +
+`summarizeForNotice` in `handoff.ts`. The notification is the headline plus the `Reason:`
+line, so the actionable cause is never hidden behind the plan path:
+
+```text
+Plan rejected before pi-goal handoff. Reason: Objective would be 2805 chars; ...
+```
+
+The rejection message states the effect explicitly: no goal was created, the session
+**keeps running**, and the fix is to correct the plan, re-run the validator, and resubmit
+through Plannotator. A refusal never aborts the session and never calls any stop/cancel
+API, so the planning loop (fix plan -> submit -> adapter runs again) is never broken.
+
 ## Limits
 
 These are the pi-goal limits the adapter enforces. They are named constants in `ir.ts`
