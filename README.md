@@ -20,6 +20,10 @@ goal is created in any of those cases, but the session keeps running: the adapte
 and notifies (with the `Reason:` visible in the notification), never aborts, so the user can
 fix the plan and resubmit through Plannotator.
 
+## Demo
+
+<video src="media/demo_desktop_ratio.mp4" controls width="720" muted loop playsinline></video>
+
 ## Universal Adapter Contract
 
 **Your planning workflow is free. The Universal Adapter does not force how you plan.
@@ -53,6 +57,23 @@ be useful:
    adapter stays silent by design.
 
 ## Install
+
+### Install with a prompt
+
+Prefer to let your AI do it? Paste this prompt into pi:
+
+> Install the `pi-plannotator-goal` package for me. First read
+> [docs/INSTALL.md](docs/INSTALL.md) from the package repository and follow it exactly.
+> Remember: this is an adapter, not a bundle - do not assume Plannotator or pi-goal are
+> installed. Check my pi environment for the Plannotator extension (`pi list`), check for
+> a pi-goal extension, ask me before installing anything missing, then install the adapter,
+> write the `plannotator-goal.json` settings file with `"enabled": true` in the right
+> scope, and verify at the end.
+
+The prompt deliberately points at `docs/INSTALL.md`: that file is the source of truth for
+the dependency check, the config scopes, and the verification steps.
+
+### Install manually
 
 Install as a pi package from npm, git, or a local path:
 
@@ -152,6 +173,8 @@ No test touches the real agent dir: each one builds a temp `cwd` and a temp
 
 ## Documentation
 
+- `docs/INSTALL.md` - the AI-executed install procedure: dependency check, config scopes,
+  verification.
 - `docs/ADAPTER-CONTRACT.md` - the Universal Adapter Contract v1: the source of truth for
   the plan format, what is a task and what is not, and the fail-closed principle.
 - `docs/CONFIG.md` - scopes, precedence, defaults, environment overrides.
