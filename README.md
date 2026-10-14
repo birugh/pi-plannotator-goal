@@ -22,7 +22,7 @@ fix the plan and resubmit through Plannotator.
 
 ## Demo
 
-<video src="media/demo_desktop_ratio.mp4" controls width="720" muted loop playsinline></video>
+<video src="https://github.com/user-attachments/assets/3a3da862-fab2-4d27-ae05-86af24aa4504" controls width="720" muted loop playsinline></video>
 
 ## Universal Adapter Contract
 
